@@ -16,10 +16,10 @@ func main() {
 	defer store.CloseDB()
 	router := gin.Default()
 
-	router.POST("/patients", server.Create)
-	router.GET("/patients/:id", server.Get)
-	router.DELETE("/patients/:id", server.Delete)
-	router.GET("/patients/list", server.GetList)
+	router.POST("/services", server.Create)
+	router.GET("/services/:id", server.Get)
+	router.DELETE("/services/:id", server.Delete)
+	router.GET("/services/list", server.GetList)
 
 	server := &http.Server{
 		Addr:         cfg.Address,

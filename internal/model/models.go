@@ -1,13 +1,7 @@
 package model
 
-import "time"
-
-type Patient struct {
-	ID         int       `json:"id" db:"id"`
-	CreatedAt  time.Time `json:"created_at" db:"created_at"`
-	Surname    string    `json:"surname" db:"surname"`
-	Name       string    `json:"name" db:"name"`
-	Patronymic string    `json:"patronymic" db:"patronymic"`
-	Gender     uint8     `json:"gender" db:"gender"`
-	Birthday   time.Time `json:"birthday" db:"birthday"`
+type Service struct {
+	ID    uint64 `json:"id" db:"id"`
+	Name  string `json:"name" db:"name"`
+	Price int64  `json:"price" db:"price"`
 }

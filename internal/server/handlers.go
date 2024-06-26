@@ -2,8 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	"net/http"
 	"strconv"
@@ -14,23 +12,23 @@ import (
 )
 
 func Delete(c *gin.Context) {
-	var patient model.Patient
+	var service model.Service
 	id, _ := strconv.Atoi(c.Param("id"))
 
 	query := `
-	SELECT patients.id
-	FROM patients
-	WHERE patients.id=$1 LIMIT 100`
+	SELECT services.id
+	FROM services
+	WHERE services.id=$1 LIMIT 100`
 	row := store.DB.QueryRow(context.Background(), query, id)
 
-	err := row.Scan(&patient.ID)
+	err := row.Scan(&service.ID)
 
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Person not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
 		return
 	}
 
-	query = `DELETE FROM patients WHERE id=$1`
+	query = `DELETE FROM services WHERE id=$1`
 	_, err = store.DB.Exec(context.Background(), query, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -40,49 +38,44 @@ func Delete(c *gin.Context) {
 }
 
 func Create(c *gin.Context) {
-	var patient model.Patient
-	if err := c.ShouldBindJSON(&patient); err != nil {
+	var service model.Service
+	if err := c.ShouldBindJSON(&service); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	fmt.Println(patient)
-	patient.CreatedAt = time.Now().UTC()
-	fmt.Println(patient)
 	query := `
-		INSERT INTO patients (created_at,surname,name,patronymic,gender,birthday)
-		VALUES ($1,$2,$3,$4,$5,$6)
+		INSERT INTO services (name,price)
+		VALUES ($1,$2)
 		RETURNING id`
-	err := store.DB.QueryRow(context.Background(), query, patient.CreatedAt, patient.Surname, patient.Name,
-		patient.Patronymic, patient.Gender, patient.Birthday).Scan(&patient.ID)
+	err := store.DB.QueryRow(context.Background(), query, service.Name, service.Price).Scan(&service.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, patient)
+	c.JSON(http.StatusCreated, service)
 }
 
 func Get(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	var patient model.Patient
+	var service model.Service
 	query := `
-		SELECT id,created_at,surname,name,patronymic,gender,birthday
-		FROM patients
-		WHERE patients.id=$1 LIMIT 100`
+		SELECT id,name,price
+		FROM services
+		WHERE services.id=$1 LIMIT 100`
 	row := store.DB.QueryRow(context.Background(), query, id)
-	err := row.Scan(&patient.ID, &patient.CreatedAt, &patient.Surname, &patient.Name,
-		&patient.Patronymic, &patient.Gender, &patient.Birthday)
+	err := row.Scan(&service.ID, &service.Name, &service.Price)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Person not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
 		return
 	}
-	c.JSON(http.StatusOK, patient)
+	c.JSON(http.StatusOK, service)
 }
 
 func GetList(c *gin.Context) {
-	var patients []model.Patient
+	var services []model.Service
 	query := `
-		SELECT id,created_at,surname,name,patronymic,gender,birthday
-		FROM patients
+		SELECT id,name,price
+		FROM services
 		LIMIT 100`
 	rows, err := store.DB.Query(context.Background(), query)
 	if err != nil {
@@ -91,14 +84,13 @@ func GetList(c *gin.Context) {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var patient model.Patient
-		err := rows.Scan(&patient.ID, &patient.CreatedAt, &patient.Surname, &patient.Name,
-			&patient.Patronymic, &patient.Gender, &patient.Birthday)
+		var service model.Service
+		err := rows.Scan(&service.ID, &service.Name, &service.Price)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		patients = append(patients, patient)
+		services = append(services, service)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -106,5 +98,5 @@ func GetList(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, patients)
+	c.JSON(http.StatusOK, services)
 }
